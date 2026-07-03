@@ -405,6 +405,8 @@ window.App = (function app(window, document) {
    * Build the log-selection dropdown from the list of tailed files. Hidden when
    * only a single source is tailed.
    *
+   * The dropdown is always shown, even for a single file; the merged
+   * "All logs" entry is only offered when there is more than one source.
    * When the server provides a default source (explicit file argument,
    * "messages", or the first file found) it is preselected; otherwise all
    * logs are shown merged.
@@ -416,16 +418,18 @@ window.App = (function app(window, document) {
   var _buildFileDropdown = function(files, defaultFile) {
     var allOption;
 
-    if (!_logSelect || !files || files.length < 2) {
+    if (!_logSelect || !files || files.length === 0) {
       return;
     }
 
     _logSelect.innerHTML = '';
 
-    allOption = document.createElement('option');
-    allOption.value = 'all';
-    allOption.textContent = 'All logs';
-    _logSelect.appendChild(allOption);
+    if (files.length > 1) {
+      allOption = document.createElement('option');
+      allOption.value = 'all';
+      allOption.textContent = 'All logs';
+      _logSelect.appendChild(allOption);
+    }
 
     files.forEach(function(file) {
       var option = document.createElement('option');

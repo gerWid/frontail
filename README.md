@@ -114,8 +114,8 @@ Web interface runs on **http://[host]:[port]**.
 
 #### Switching between multiple logs
 
-When more than one file is tailed, a dropdown appears in the top bar. Pick a file
-to show only its lines, or choose **All logs** to see every file merged together.
+A dropdown in the top bar lists every tailed file. Pick a file to show only its
+lines; with more than one file an **All logs** entry shows everything merged.
 The source filter combines with the search filter, so you can, for example,
 search within a single log.
 

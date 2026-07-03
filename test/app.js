@@ -188,15 +188,23 @@ describe('browser application', () => {
     p.textContent.should.be.equal('line1');
   });
 
-  it('should show the log dropdown only for multiple files', () => {
+  it('should show the log dropdown even for a single file', () => {
     const logSelect = window.document.querySelector('#logSelect');
 
     io.emit('options:files', ['only.log']);
-    logSelect.style.display.should.be.equal('none');
+    logSelect.style.display.should.not.be.equal('none');
+    // no "All logs" entry needed for a single source
+    logSelect.querySelectorAll('option').length.should.be.equal(1);
+    logSelect.querySelectorAll('option')[0].value.should.be.equal('only.log');
+  });
+
+  it('should offer "All logs" for multiple files', () => {
+    const logSelect = window.document.querySelector('#logSelect');
 
     io.emit('options:files', ['a.log', 'b.log']);
     logSelect.style.display.should.not.be.equal('none');
     logSelect.querySelectorAll('option').length.should.be.equal(3); // All + 2
+    logSelect.querySelectorAll('option')[0].value.should.be.equal('all');
   });
 
   it('should filter lines by the selected source', () => {

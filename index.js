@@ -55,7 +55,8 @@ if (program.daemonize) {
       path.join(__dirname, 'web', 'index.html'),
       files,
       filesNamespace,
-      program.theme
+      program.theme,
+      pkg.version
     );
 
   const builder = serverBuilder();
