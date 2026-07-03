@@ -405,10 +405,15 @@ window.App = (function app(window, document) {
    * Build the log-selection dropdown from the list of tailed files. Hidden when
    * only a single source is tailed.
    *
+   * When the server provides a default source (explicit file argument,
+   * "messages", or the first file found) it is preselected; otherwise all
+   * logs are shown merged.
+   *
    * @param {Array} files
+   * @param {String} defaultFile source to preselect
    * @private
    */
-  var _buildFileDropdown = function(files) {
+  var _buildFileDropdown = function(files, defaultFile) {
     var allOption;
 
     if (!_logSelect || !files || files.length < 2) {
@@ -430,6 +435,12 @@ window.App = (function app(window, document) {
       option.title = file;
       _logSelect.appendChild(option);
     });
+
+    if (defaultFile && files.indexOf(defaultFile) !== -1) {
+      _logSelect.value = defaultFile;
+      _sourceFilter = defaultFile;
+      _filterLogs();
+    }
 
     _logSelect.style.display = '';
   };
@@ -654,8 +665,8 @@ window.App = (function app(window, document) {
         .on('options:highlightConfig', function(highlightConfig) {
           _highlightConfig = highlightConfig;
         })
-        .on('options:files', function(files) {
-          _buildFileDropdown(files);
+        .on('options:files', function(files, defaultFile) {
+          _buildFileDropdown(files, defaultFile);
         })
         .on('line', function(data) {
           // a line is either a plain string or { line, source }

@@ -45,15 +45,19 @@ Then open [http://127.0.0.1:9001](http://127.0.0.1:9001).
 
 Configure it either by editing `compose.yaml` directly or via environment variables:
 
-- **Log file(s):** edit the `command:` list in `compose.yaml`. Paths are _inside_
-  the container (the host log directory is mounted at `/log`). List several files
-  to get the [log dropdown](#switching-between-multiple-logs) in the UI, e.g.
+- **Log files:** the bundled `command:` passes `--log-dir /log`, so **every** log
+  file in the mounted folder shows up in the
+  [UI dropdown](#switching-between-multiple-logs) automatically. Paths are
+  _inside_ the container (the host log directory is mounted at `/log`). The file
+  listed after `--log-dir` is preselected; remove it to preselect `/log/messages`
+  (or the first file found), e.g.
 
   ```yaml
       command:
         - "--ui-highlight"
+        - "--log-dir"
+        - "/log"
         - "/log/syslog"
-        - "/log/auth.log"
   ```
 
 - `FRONTAIL_LOG_DIR` – host directory mounted read-only at `/log` (default `/var/log`)
@@ -98,6 +102,7 @@ you at a glance whether everything is fine.
       --ui-highlight                highlight words or lines if defined string found in logs, default preset
       --ui-highlight-preset <path>  custom preset for highlighting (see ./preset/default.json)
       --stdout                      print tailed lines also to standard output (useful for docker logs)
+      --log-dir <dir>               make every log file in <dir> selectable in the UI (in addition to [file ...])
       --path <path>                 prefix path for the running application, default /
       --help                        output usage information
 
@@ -110,9 +115,17 @@ Web interface runs on **http://[host]:[port]**.
 #### Switching between multiple logs
 
 When more than one file is tailed, a dropdown appears in the top bar. Pick a file
-to show only its lines, or choose **All logs** to see every file merged together
-(the default). The source filter combines with the search filter, so you can, for
-example, search within a single log.
+to show only its lines, or choose **All logs** to see every file merged together.
+The source filter combines with the search filter, so you can, for example,
+search within a single log.
+
+With `--log-dir <dir>` every tailable log file found in `<dir>` is offered in the
+dropdown as well (rotated/compressed/binary files like `*.1`, `*.gz` or `wtmp`
+are skipped; the directory is scanned once at startup). Which file is preselected:
+
+1. the first file passed as `[file ...]` argument,
+2. otherwise `messages` in the log dir,
+3. otherwise the first file found.
 
 ### UI controls
 

@@ -11,10 +11,10 @@ services:
       # Mount the host log directory read-only into the container at /log.
       # Point FRONTAIL_LOG_DIR at wherever your logs live on the host.
       - "${FRONTAIL_LOG_DIR:-/var/log}:/log:ro"
-    # Log file(s) to tail plus any frontail options. Paths are INSIDE the
-    # container (the host dir above is mounted at /log). Edit this list to pick
-    # your file(s). List several files to get a dropdown in the UI that lets you
-    # switch between them (or view all at once).
+    # Paths are INSIDE the container (the host dir above is mounted at /log).
+    # --log-dir makes EVERY log file found in the mounted folder selectable in
+    # the UI dropdown. The optional file argument at the end is preselected;
+    # without it frontail preselects /log/messages, or the first file found.
     command:
       - "--theme"
       - "${FRONTAIL_THEME:-dark}"
@@ -22,5 +22,6 @@ services:
       # also echo tailed lines to container stdout (visible via `docker compose logs -f`);
       # remove this flag if you only want them in the browser
       - "--stdout"
+      - "--log-dir"
+      - "/log"
       - "/log/dpkg.log"
-      - "/log/alternatives.log"

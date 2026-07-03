@@ -215,6 +215,17 @@ describe('daemonize', () => {
       daemon.daemon.lastCall.args[1].should.containDeep(['--stdout']);
     });
 
+    it('with log-dir option', () => {
+      optionsParser.parse(['node', '/path/to/frontail', '--log-dir', '/log']);
+
+      daemonize('script', optionsParser);
+
+      daemon.daemon.lastCall.args[1].should.containDeep([
+        '--log-dir',
+        '/log',
+      ]);
+    });
+
     it('with file to tail', () => {
       optionsParser.parse(['node', '/path/to/frontail', '/path/to/file']);
 

@@ -216,6 +216,19 @@ describe('browser application', () => {
     log.childNodes[1].style.display.should.be.equal('');
   });
 
+  it('should preselect the default source in the dropdown', () => {
+    io.emit('options:files', ['a.log', 'b.log'], 'b.log');
+    io.emit('line', { line: 'line-a', source: 'a.log' });
+    io.emit('line', { line: 'line-b', source: 'b.log' });
+
+    const logSelect = window.document.querySelector('#logSelect');
+    logSelect.value.should.be.equal('b.log');
+
+    const log = window.document.querySelector('.log');
+    log.childNodes[0].style.display.should.be.equal('none');
+    log.childNodes[1].style.display.should.be.equal('');
+  });
+
   it('should stripe alternate visible lines only', () => {
     io.emit('line', 'line1');
     io.emit('line', 'another'); // hidden by the URL filter `line.*`

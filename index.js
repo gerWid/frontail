@@ -14,12 +14,13 @@ const connectBuilder = require('./lib/connect_builder');
 const program = require('./lib/options_parser');
 const serverBuilder = require('./lib/server_builder');
 const daemonize = require('./lib/daemonize');
+const logDirScanner = require('./lib/log_dir');
 
 /**
  * Parse args
  */
 program.parse(process.argv);
-if (program.args.length === 0) {
+if (program.args.length === 0 && !program.logDir) {
   console.error('Arguments needed, use --help');
   process.exit();
 }
@@ -30,7 +31,7 @@ if (program.args.length === 0) {
 const doAuthorization = !!(program.user && program.password);
 const doSecure = !!(program.key && program.certificate);
 const sessionSecret = String(+new Date()) + Math.random();
-const files = program.args.join(' ');
+const files = program.args.join(' ') || `${program.logDir}/*`;
 const filesNamespace = crypto.createHash('md5').update(files).digest('hex');
 const urlPath = program.urlPath.replace(/\/$/, ''); // remove trailing slash
 
@@ -117,17 +118,63 @@ if (program.daemonize) {
   }
 
   /**
-   * Tail each file with its own tailer so every emitted line can be tagged
-   * with its source. This lets the UI offer a dropdown to switch between logs
-   * when more than one file is tailed. stdin is a single source named 'stdin'.
+   * Build the list of sources: explicit [file ...] arguments plus, when
+   * --log-dir is given, every tailable file discovered in that directory.
+   * stdin ('-') is a single source named 'stdin' and ignores --log-dir.
    */
   const isStdin = program.args[0] === '-';
-  const sources = isStdin ? ['stdin'] : program.args;
+  const logDir = program.logDir
+    ? path.resolve(untildify(program.logDir))
+    : null;
 
+  let discovered = [];
+  let discoverError = null;
+  if (logDir && !isStdin) {
+    const scan = logDirScanner.discover(logDir);
+    discovered = scan.files;
+    discoverError = scan.error;
+  }
+
+  // union, explicit files first, deduplicated by resolved path
+  const seenPaths = new Set();
+  const fileSources = [];
+  (isStdin ? [] : program.args).concat(discovered).forEach((file) => {
+    const key = path.resolve(file);
+    if (!seenPaths.has(key)) {
+      seenPaths.add(key);
+      fileSources.push(file);
+    }
+  });
+
+  if (!isStdin && fileSources.length === 0) {
+    console.error(
+      logDir
+        ? `[frontail] ERROR: no log files found in ${logDir}` +
+            `${discoverError ? ` (${discoverError})` : ''}`
+        : 'Arguments needed, use --help'
+    );
+    process.exit(1);
+  }
+
+  const sources = isStdin ? ['stdin'] : fileSources;
+
+  /**
+   * Source preselected in the UI: first explicit file, else "messages" in the
+   * log dir, else the first file found.
+   */
+  const defaultSource = isStdin
+    ? null
+    : logDirScanner.pickDefault(program.args, fileSources);
+
+  /**
+   * Tail each file with its own tailer so every emitted line can be tagged
+   * with its source. This lets the UI offer a dropdown to switch between logs
+   * when more than one file is tailed.
+   */
   const filesSocket = io.of(`/${filesNamespace}`);
 
-  const tailers = sources.map((source, index) => {
-    const target = isStdin ? ['-'] : [program.args[index]];
+  const tailers = sources.map((source) => {
+    const target = isStdin ? ['-'] : [source];
     const tailer = tail(target, {
       buffer: program.number,
     });
@@ -160,7 +207,7 @@ if (program.daemonize) {
       socket.emit('options:highlightConfig', highlightConfig);
     }
 
-    socket.emit('options:files', sources);
+    socket.emit('options:files', sources, defaultSource);
 
     tailers.forEach(({ source, tailer }) => {
       tailer.getBuffer().forEach((line) => {
@@ -231,9 +278,20 @@ if (program.daemonize) {
       } | buffer=${program.number} lines`
     );
 
+    if (logDir) {
+      if (discoverError) {
+        logStartup(`WARN log dir ${logDir}: ${discoverError}`);
+      } else {
+        logStartup(
+          `log dir: ${logDir} (${discovered.length} file(s) discovered)`
+        );
+      }
+    }
+
     logStartup(`tailing ${sources.length} source(s):`);
     let warnings = 0;
     sources.forEach((source) => {
+      const isDefault = source === defaultSource ? ' [default]' : '';
       if (source === 'stdin') {
         logStartup('  OK   stdin');
         return;
@@ -242,13 +300,15 @@ if (program.daemonize) {
         fs.accessSync(source, fs.constants.R_OK);
         const { size } = fs.statSync(source);
         logStartup(
-          `  OK   ${source} (${size === 0 ? 'empty' : formatBytes(size)})`
+          `  OK   ${source} (${
+            size === 0 ? 'empty' : formatBytes(size)
+          })${isDefault}`
         );
       } catch (e) {
         warnings += 1;
         logStartup(
           `  WARN ${source}: not readable or missing — ` +
-            'lines will appear once the file exists'
+            `lines will appear once the file exists${isDefault}`
         );
       }
     });
