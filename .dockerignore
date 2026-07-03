@@ -1,0 +1,18 @@
+# Never copy the host modules into the image — they are installed fresh with
+# `npm ci --omit=dev`, so copying them would drag dev tooling into the image.
+node_modules
+npm-debug.log
+
+# VCS / CI / docs / tests — not needed at runtime
+.git
+.gitignore
+.github
+.travis.yml
+test
+dist
+*.md
+.DS_Store
+.editorconfig
+compose.yaml
+Dockerfile
+.dockerignore
