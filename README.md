@@ -114,8 +114,8 @@ example, search within a single log.
 The topbar offers, next to the pause button:
 
 - **A− / A+** – decrease/increase the log font size (50%–300%)
-- **stripes icon** – toggle zebra striping: alternate visible lines get a subtly
-  tinted background (dark theme: `#121212`/`#1e1e1e`, light theme: white/`#f2f2f2`),
+- **stripes icon** – toggle zebra striping: alternate visible lines get a tinted
+  background (dark theme: `#121212`/`#2e2e2e`, light theme: white/`#e4e4e4`),
   which makes long lines much easier to follow
 - **moon icon** – switch between the dark and light theme on the fly
 

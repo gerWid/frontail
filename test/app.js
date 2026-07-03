@@ -233,7 +233,7 @@ describe('browser application', () => {
 
     clickOnElement(btn);
     log.className.should.containEql('zebra');
-    btn.className.should.containEql('active');
+    btn.className.should.containEql('tool-active');
 
     clickOnElement(btn);
     log.className.should.not.containEql('zebra');

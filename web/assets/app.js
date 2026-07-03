@@ -226,12 +226,13 @@ window.App = (function app(window, document) {
     if (enabled) {
       _logContainer.classList.add('zebra');
       if (_zebraBtn) {
-        _zebraBtn.classList.add('active');
+        // own state class — bootstrap's `.active` would hide the button icon
+        _zebraBtn.classList.add('tool-active');
       }
     } else {
       _logContainer.classList.remove('zebra');
       if (_zebraBtn) {
-        _zebraBtn.classList.remove('active');
+        _zebraBtn.classList.remove('tool-active');
       }
     }
     _storeSet('frontail-zebra', enabled ? '1' : '0');

@@ -62,9 +62,11 @@ body {
   vertical-align: top;
 }
 
-.btn-tool.active {
-  background-color: #c8cdd2;
-  border-color: #999;
+/* our own toggle state class — deliberately NOT bootstrap's `.active`,
+ * which would reset the button's background-image (icon) */
+.btn-tool.tool-active {
+  background-color: #bcd9f2;
+  border-color: #7fb3e0;
 }
 
 .btn-theme {
@@ -129,9 +131,9 @@ body {
   color: black;
 }
 
-/* Zebra stripes: every other visible line gets a subtle tint */
+/* Zebra stripes: every other visible line gets a clearly visible tint */
 .log.zebra .zebra-alt {
-  background-color: #f2f2f2;
+  background-color: #e4e4e4;
 }
 
 /* selection always wins over the zebra tint */

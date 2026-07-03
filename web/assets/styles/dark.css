@@ -9,7 +9,8 @@
  *   (app bar / 4dp -> 9% overlay ~= #272727, inputs / 1dp -> 5% ~= #1e1e1e)
  * - on-surface text uses white at fixed emphasis levels:
  *   87% high emphasis, 60% medium emphasis, 38% disabled
- * - accent colors are desaturated: primary #bb86fc, secondary #03dac6
+ * - accent colors are desaturated 200-level tints:
+ *   primary #90caf9 (blue 200), secondary #03dac6
  * - error is #cf6679
  */
 
@@ -17,10 +18,11 @@
   --md-background: #121212;
   --md-surface-1dp: #1e1e1e;
   --md-surface-4dp: #272727;
+  --md-surface-8dp: #2e2e2e;
   --md-on-surface-high: rgba(255, 255, 255, 0.87);
   --md-on-surface-medium: rgba(255, 255, 255, 0.6);
   --md-on-surface-disabled: rgba(255, 255, 255, 0.38);
-  --md-primary: #bb86fc;
+  --md-primary: #90caf9;
   --md-secondary: #03dac6;
   --md-error: #cf6679;
 }
@@ -54,7 +56,7 @@ body {
 
 /* Active (paused) state switches to the primary accent */
 .btn-pause.play {
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23bb86fc' viewBox='0 0 8 8'><path d='M1 1v6l6-3-6-3z'></path></svg>") no-repeat center center;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%2390caf9' viewBox='0 0 8 8'><path d='M1 1v6l6-3-6-3z'></path></svg>") no-repeat center center;
     background-color: var(--md-surface-4dp);
 }
 
@@ -66,8 +68,8 @@ body {
 }
 
 /* Active toggle: Material "activated" state = primary at 24% */
-.btn-tool.active {
-  background-color: rgba(187, 134, 252, 0.24);
+.btn-tool.tool-active {
+  background-color: rgba(144, 202, 249, 0.24);
   border-color: transparent;
 }
 
@@ -85,8 +87,8 @@ body {
   background-size: 14px 14px;
 }
 
-.btn-zebra.active {
-  background-color: rgba(187, 134, 252, 0.24);
+.btn-zebra.tool-active {
+  background-color: rgba(144, 202, 249, 0.24);
 }
 
 /* Text field and dropdown: 1dp surface, high-emphasis text */
@@ -141,7 +143,7 @@ body {
 
 /* Selected line: primary accent as a 24% state overlay (Material "activated") */
 .log .line-selected {
-  background-color: rgba(187, 134, 252, 0.24);
+  background-color: rgba(144, 202, 249, 0.24);
 }
 
 /* Search matches: secondary accent; dark text on it for contrast (>= 4.5:1) */
@@ -151,12 +153,12 @@ body {
 }
 
 /* Zebra stripes: alternate between the base background (#121212) and the
- * 1dp surface (#1e1e1e) — high-emphasis text stays >= 13:1 on both */
+ * 8dp surface (#2e2e2e) — clearly visible, high-emphasis text stays ~11:1 */
 .log.zebra .zebra-alt {
-  background-color: var(--md-surface-1dp);
+  background-color: var(--md-surface-8dp);
 }
 
 /* selection always wins over the zebra tint */
 .log.zebra .line-selected {
-  background-color: rgba(187, 134, 252, 0.24);
+  background-color: rgba(144, 202, 249, 0.24);
 }
