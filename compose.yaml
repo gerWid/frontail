@@ -19,5 +19,8 @@ services:
       - "--theme"
       - "${FRONTAIL_THEME:-dark}"
       - "--ui-highlight"
+      # also echo tailed lines to container stdout (visible via `docker compose logs -f`);
+      # remove this flag if you only want them in the browser
+      - "--stdout"
       - "/log/dpkg.log"
       - "/log/alternatives.log"

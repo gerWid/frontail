@@ -207,6 +207,14 @@ describe('daemonize', () => {
       ]);
     });
 
+    it('with stdout option', () => {
+      optionsParser.parse(['node', '/path/to/frontail', '--stdout']);
+
+      daemonize('script', optionsParser);
+
+      daemon.daemon.lastCall.args[1].should.containDeep(['--stdout']);
+    });
+
     it('with file to tail', () => {
       optionsParser.parse(['node', '/path/to/frontail', '/path/to/file']);
 

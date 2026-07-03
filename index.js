@@ -131,6 +131,11 @@ if (program.daemonize) {
     });
     tailer.on('line', (line) => {
       filesSocket.emit('line', { line, source });
+      if (program.stdout) {
+        // echo to stdout (e.g. for docker logs); prefix with the source
+        // when tailing multiple files
+        console.log(sources.length > 1 ? `${source}: ${line}` : line);
+      }
     });
     return { source, tailer };
   });

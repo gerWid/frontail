@@ -58,6 +58,10 @@ Configure it either by editing `compose.yaml` directly or via environment variab
 - `FRONTAIL_PORT` – host port to expose (default `9001`)
 - `FRONTAIL_THEME` – UI theme, `dark` (default) or `default` (light)
 
+The bundled `compose.yaml` passes `--stdout`, so the tailed lines also show up in
+`docker compose logs -f frontail`. Remove that flag from the `command:` list if
+you only want them in the browser.
+
   ```sh
   FRONTAIL_LOG_DIR=/var/log FRONTAIL_PORT=9500 docker compose up -d --build
   ```
@@ -86,6 +90,7 @@ Configure it either by editing `compose.yaml` directly or via environment variab
       --ui-no-indent                don't indent log lines
       --ui-highlight                highlight words or lines if defined string found in logs, default preset
       --ui-highlight-preset <path>  custom preset for highlighting (see ./preset/default.json)
+      --stdout                      print tailed lines also to standard output (useful for docker logs)
       --path <path>                 prefix path for the running application, default /
       --help                        output usage information
 
