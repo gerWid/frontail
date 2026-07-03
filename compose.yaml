@@ -1,0 +1,21 @@
+services:
+  frontail:
+    build: .
+    image: frontail:local
+    container_name: frontail
+    restart: unless-stopped
+    ports:
+      # host:container — change the host port via FRONTAIL_PORT if 9001 is taken
+      - "${FRONTAIL_PORT:-9001}:9001"
+    volumes:
+      # Mount the host log directory read-only into the container at /log.
+      # Point FRONTAIL_LOG_DIR at wherever your logs live on the host.
+      - "${FRONTAIL_LOG_DIR:-/var/log}:/log:ro"
+    # Log file(s) to tail plus any frontail options. Paths are INSIDE the
+    # container (the host dir above is mounted at /log). Edit this list to pick
+    # your file(s). List several files to get a dropdown in the UI that lets you
+    # switch between them (or view all at once).
+    command:
+      - "--ui-highlight"
+      - "/log/dpkg.log"
+      - "/log/alternatives.log"

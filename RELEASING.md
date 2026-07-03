@@ -1,16 +1,16 @@
 # Releasing Frontail
 
-After all [pull requests](https://github.com/mthenw/frontail/pulls) for a release have been merged and all [Travis CI builds](https://travis-ci.org/mthenw/frontail) are green, you may create a release as follows:
+After all [pull requests](https://github.com/gerwid/frontail/pulls) for a release have been merged and CI is green on the default branch, you may create a release as follows:
 
-1. If you haven't already, switch to the master branch, ensure that you have no changes, and pull from origin.
+1. If you haven't already, switch to the default branch, ensure that you have no changes, and pull from origin.
 
     ```sh
-    $ git checkout master
+    $ git checkout main
     $ git status
-    $ git pull <remote> master --rebase
+    $ git pull origin main --rebase
     ```
 
-1. Edit the `package.json` file changing `version` field to your new release version and run `npm i`.
+1. Edit the `package.json` file changing the `version` field to your new release version and run `npm i`.
 
 1. Commit your changes.
 
@@ -18,22 +18,16 @@ After all [pull requests](https://github.com/mthenw/frontail/pulls) for a releas
     $ git commit -am "Release <version>"
     ```
 
-1. Push the commit.
+1. Tag and push the commit.
 
     ```sh
-    $ git push origin head
+    $ git tag v<version>
+    $ git push origin head --tags
     ```
 
-1. GitHub action will publish new version to NPM and push new tag.
+1. Publish a new release on GitHub for the tag.
 
-1. Publish new release on GitHub with [`release`](https://github.com/zeit/release) package.
-
-    ```sh
-    $ git pull
-    $ npx release -P
-    ```
-
-1. Upload binaries
+1. Build and upload binaries.
 
     ```sh
     $ npm run pkg

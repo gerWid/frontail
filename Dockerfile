@@ -1,8 +1,9 @@
-FROM node:12-buster-slim
+FROM node:20-bookworm-slim
 
 WORKDIR /frontail
-ADD . .
-RUN npm install --production
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
 
 ENTRYPOINT ["/frontail/docker-entrypoint.sh"]
 EXPOSE 9001

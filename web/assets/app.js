@@ -82,19 +82,142 @@ window.App = (function app(window, document) {
   var _highlightConfig;
 
   /**
-   * Hide element if doesn't contain filter value
+   * @type {HTMLElement}
+   * @private
+   */
+  var _logSelect;
+
+  /**
+   * Currently selected source file, or 'all' to show every log.
+   *
+   * @type {String}
+   * @private
+   */
+  var _sourceFilter = 'all';
+
+  /**
+   * Test if a line matches the current text filter. Invalid regexes never hide
+   * anything (treated as "matches").
+   *
+   * @param {String} text
+   * @return {boolean}
+   * @private
+   */
+  var _matchesFilter = function(text) {
+    if (_filterValue === '') {
+      return true;
+    }
+    try {
+      return new RegExp(_filterValue, 'i').test(text);
+    } catch (e) {
+      return true;
+    }
+  };
+
+  /**
+   * Hide element if it doesn't match the text filter or the selected source
    *
    * @param {Object} element
    * @private
    */
   var _filterElement = function(elem) {
-    var pattern = new RegExp(_filterValue, 'i');
     var element = elem;
-    if (pattern.test(element.textContent)) {
+    var source = element.getAttribute('data-source');
+    var matchesSource = _sourceFilter === 'all' || source === null || source === _sourceFilter;
+    if (matchesSource && _matchesFilter(element.textContent)) {
       element.style.display = '';
     } else {
       element.style.display = 'none';
     }
+  };
+
+  /**
+   * Remove previously inserted search-highlight wrappers from an element,
+   * merging the freed text back into its surrounding text nodes.
+   *
+   * @param {HTMLElement} root
+   * @private
+   */
+  var _clearSearchHighlight = function(root) {
+    var marks = root.querySelectorAll('span.search-highlight');
+    var i = marks.length;
+    var mark;
+    var parent;
+    while (i) {
+      mark = marks[i - 1];
+      parent = mark.parentNode;
+      parent.replaceChild(document.createTextNode(mark.textContent), mark);
+      parent.normalize();
+      i -= 1;
+    }
+  };
+
+  /**
+   * Wrap every occurrence of the current filter value inside an element in
+   * <span class="search-highlight"> so matches stand out in the shown lines.
+   * Operates on text nodes only, so it never corrupts existing markup (ansi
+   * colors, word highlights).
+   *
+   * @param {HTMLElement} root
+   * @private
+   */
+  var _applySearchHighlight = function(root) {
+    var regex;
+    var walker;
+    var textNodes = [];
+
+    _clearSearchHighlight(root);
+
+    if (_filterValue === '') {
+      return;
+    }
+
+    try {
+      regex = new RegExp('(' + _filterValue + ')', 'gi');
+    } catch (e) {
+      return;
+    }
+
+    walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    textNodes.forEach(function(node) {
+      var text = node.nodeValue;
+      var fragment = document.createDocumentFragment();
+      var lastIndex = 0;
+      var match;
+      var matched;
+      var span;
+
+      regex.lastIndex = 0;
+      if (!regex.test(text)) {
+        return;
+      }
+      regex.lastIndex = 0;
+
+      match = regex.exec(text);
+      while (match !== null) {
+        [matched] = match;
+        if (match.index > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+        }
+        span = document.createElement('span');
+        span.className = 'search-highlight';
+        span.textContent = matched;
+        fragment.appendChild(span);
+        lastIndex = match.index + matched.length;
+        if (matched.length === 0) {
+          regex.lastIndex += 1;
+        }
+        match = regex.exec(text);
+      }
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+      node.parentNode.replaceChild(fragment, node);
+    });
   };
 
   /**
@@ -106,16 +229,56 @@ window.App = (function app(window, document) {
   var _filterLogs = function() {
     var collection = _logContainer.childNodes;
     var i = collection.length;
+    var element;
+    var inner;
 
     if (i === 0) {
       return;
     }
 
     while (i) {
-      _filterElement(collection[i - 1]);
+      element = collection[i - 1];
+      _filterElement(element);
+      inner = element.querySelector('.inner-line');
+      if (inner) {
+        _applySearchHighlight(inner);
+      }
       i -= 1;
     }
     window.scrollTo(0, document.body.scrollHeight);
+  };
+
+  /**
+   * Build the log-selection dropdown from the list of tailed files. Hidden when
+   * only a single source is tailed.
+   *
+   * @param {Array} files
+   * @private
+   */
+  var _buildFileDropdown = function(files) {
+    var allOption;
+
+    if (!_logSelect || !files || files.length < 2) {
+      return;
+    }
+
+    _logSelect.innerHTML = '';
+
+    allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All logs';
+    _logSelect.appendChild(allOption);
+
+    files.forEach(function(file) {
+      var option = document.createElement('option');
+      option.value = file;
+      // show just the file name, keep the full path in the tooltip
+      option.textContent = file.replace(/^.*[\\/]/, '');
+      option.title = file;
+      _logSelect.appendChild(option);
+    });
+
+    _logSelect.style.display = '';
   };
 
   /**
@@ -223,6 +386,7 @@ window.App = (function app(window, document) {
       _logContainer = opts.container;
       _filterInput = opts.filterInput;
       _filterInput.focus();
+      _logSelect = opts.logSelect;
       _pauseBtn = opts.pauseBtn;
       _topbar = opts.topbar;
       _body = opts.body;
@@ -241,6 +405,14 @@ window.App = (function app(window, document) {
         _setFilterParam(_filterValue, window.location.toString());
         _filterLogs();
       });
+
+      // Log selection dropdown bind
+      if (_logSelect) {
+        _logSelect.addEventListener('change', function() {
+          _sourceFilter = this.value;
+          _filterLogs();
+        });
+      }
 
       // Pause button bind
       _pauseBtn.addEventListener('mouseup', function() {
@@ -286,12 +458,18 @@ window.App = (function app(window, document) {
         .on('options:highlightConfig', function(highlightConfig) {
           _highlightConfig = highlightConfig;
         })
-        .on('line', function(line) {
+        .on('options:files', function(files) {
+          _buildFileDropdown(files);
+        })
+        .on('line', function(data) {
+          // a line is either a plain string or { line, source }
+          var text = typeof data === 'string' ? data : data.line;
+          var source = typeof data === 'string' ? null : data.source;
           if (_isPaused) {
             _skipCounter += 1;
             self.log('==> SKIPPED: ' + _skipCounter + ' <==', (_skipCounter > 1));
           } else {
-            self.log(line);
+            self.log(text, false, source);
           }
         });
     },
@@ -300,8 +478,10 @@ window.App = (function app(window, document) {
      * Log data
      *
      * @param {string} data data to log
+     * @param {boolean} replace replace the last line instead of appending
+     * @param {string} source name of the file this line came from
      */
-    log: function log(data, replace = false) {
+    log: function log(data, replace = false, source = null) {
       var wasScrolledBottom = window.innerHeight + Math.ceil(window.pageYOffset + 1)
         >= document.body.offsetHeight;
       var div = document.createElement('div');
@@ -312,8 +492,12 @@ window.App = (function app(window, document) {
       data = ansi_up.escape_for_html(data); // eslint-disable-line
       data = ansi_up.ansi_to_html(data); // eslint-disable-line
       p.innerHTML = _highlightWord(data);
+      _applySearchHighlight(p);
 
       div.className = 'line';
+      if (source !== null) {
+        div.setAttribute('data-source', source);
+      }
       div = _highlightLine(data, div);
       div.addEventListener('click', function click() {
         if (this.className.indexOf('selected') === -1) {

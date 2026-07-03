@@ -12,7 +12,6 @@ const connectBuilder = require('./lib/connect_builder');
 const program = require('./lib/options_parser');
 const serverBuilder = require('./lib/server_builder');
 const daemonize = require('./lib/daemonize');
-const usageStats = require('./lib/stats');
 
 /**
  * Parse args
@@ -22,13 +21,6 @@ if (program.args.length === 0) {
   console.error('Arguments needed, use --help');
   process.exit();
 }
-
-/**
- * Init usage statistics
- */
-const stats = usageStats(!program.disableUsageStats, program);
-stats.track('runtime', 'init');
-stats.time('runtime', 'runtime');
 
 /**
  * Validate params
@@ -123,13 +115,30 @@ if (program.daemonize) {
   }
 
   /**
-   * When connected send starting data
+   * Tail each file with its own tailer so every emitted line can be tagged
+   * with its source. This lets the UI offer a dropdown to switch between logs
+   * when more than one file is tailed. stdin is a single source named 'stdin'.
    */
-  const tailer = tail(program.args, {
-    buffer: program.number,
+  const isStdin = program.args[0] === '-';
+  const sources = isStdin ? ['stdin'] : program.args;
+
+  const filesSocket = io.of(`/${filesNamespace}`);
+
+  const tailers = sources.map((source, index) => {
+    const target = isStdin ? ['-'] : [program.args[index]];
+    const tailer = tail(target, {
+      buffer: program.number,
+    });
+    tailer.on('line', (line) => {
+      filesSocket.emit('line', { line, source });
+    });
+    return { source, tailer };
   });
 
-  const filesSocket = io.of(`/${filesNamespace}`).on('connection', (socket) => {
+  /**
+   * When connected send starting data
+   */
+  filesSocket.on('connection', (socket) => {
     socket.emit('options:lines', program.lines);
 
     if (program.uiHideTopbar) {
@@ -144,27 +153,20 @@ if (program.daemonize) {
       socket.emit('options:highlightConfig', highlightConfig);
     }
 
-    tailer.getBuffer().forEach((line) => {
-      socket.emit('line', line);
+    socket.emit('options:files', sources);
+
+    tailers.forEach(({ source, tailer }) => {
+      tailer.getBuffer().forEach((line) => {
+        socket.emit('line', { line, source });
+      });
     });
   });
-
-  /**
-   * Send incoming data
-   */
-  tailer.on('line', (line) => {
-    filesSocket.emit('line', line);
-  });
-
-  stats.track('runtime', 'started');
 
   /**
    * Handle signals
    */
   const cleanExit = () => {
-    stats.timeEnd('runtime', 'runtime', () => {
-      process.exit();
-    });
+    process.exit();
   };
   process.on('SIGINT', cleanExit);
   process.on('SIGTERM', cleanExit);

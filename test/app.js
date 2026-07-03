@@ -1,6 +1,8 @@
 'use strict';
 
 const fs = require('fs');
+// jsdom is pinned to v11 for its legacy old-api used by these browser tests
+// eslint-disable-next-line import/extensions
 const jsdom = require('jsdom/lib/old-api.js');
 const events = require('events');
 
@@ -13,6 +15,7 @@ describe('browser application', () => {
       socket: io,
       container: window.document.querySelector('.log'),
       filterInput: window.document.querySelector('#filter'),
+      logSelect: window.document.querySelector('#logSelect'),
       pauseBtn: window.document.querySelector('#pauseBtn'),
       topbar: window.document.querySelector('.topbar'),
       body: window.document.querySelector('body'),
@@ -46,6 +49,7 @@ describe('browser application', () => {
     const html =
       '<title></title><body><div class="topbar"></div>' +
       '<div class="log"></div><button type="button" id="pauseBtn"></button>' +
+      '<select id="logSelect" style="display: none;"></select>' +
       '<input type="test" id="filter"/></body>';
     const ansiup = fs.readFileSync('./web/assets/ansi_up.js', 'utf-8');
     const src = fs.readFileSync('./web/assets/app.js', 'utf-8');
@@ -146,10 +150,60 @@ describe('browser application', () => {
     });
     io.emit('line', 'line1');
 
+    // the active URL filter `line.*` also wraps the match in a search highlight
     const line = window.document.querySelector('.line');
     line.parentNode.innerHTML.should.equal(
-      '<div class="line" style="background: black"><p class="inner-line">line1</p></div>'
+      '<div class="line" style="background: black"><p class="inner-line">' +
+        '<span class="search-highlight">line1</span></p></div>'
     );
+  });
+
+  it('should highlight search matches in shown lines', () => {
+    io.emit('line', 'hello line world');
+
+    const p = window.document.querySelector('.inner-line');
+    p.innerHTML.should.containEql('<span class="search-highlight">');
+    p.textContent.should.be.equal('hello line world');
+  });
+
+  it('should remove search highlight when filter is cleared', () => {
+    io.emit('line', 'line1');
+
+    const filterInput = window.document.querySelector('#filter');
+    const event = new window.KeyboardEvent('keyup', { keyCode: 27 });
+    filterInput.dispatchEvent(event);
+
+    const p = window.document.querySelector('.inner-line');
+    p.innerHTML.should.not.containEql('search-highlight');
+    p.textContent.should.be.equal('line1');
+  });
+
+  it('should show the log dropdown only for multiple files', () => {
+    const logSelect = window.document.querySelector('#logSelect');
+
+    io.emit('options:files', ['only.log']);
+    logSelect.style.display.should.be.equal('none');
+
+    io.emit('options:files', ['a.log', 'b.log']);
+    logSelect.style.display.should.not.be.equal('none');
+    logSelect.querySelectorAll('option').length.should.be.equal(3); // All + 2
+  });
+
+  it('should filter lines by the selected source', () => {
+    io.emit('options:files', ['a.log', 'b.log']);
+    io.emit('line', { line: 'line-a', source: 'a.log' });
+    io.emit('line', { line: 'line-b', source: 'b.log' });
+
+    const logSelect = window.document.querySelector('#logSelect');
+    logSelect.value = 'b.log';
+    const event = window.document.createEvent('Event');
+    event.initEvent('change', true, true);
+    logSelect.dispatchEvent(event);
+
+    const log = window.document.querySelector('.log');
+    log.childNodes.length.should.be.equal(2);
+    log.childNodes[0].style.display.should.be.equal('none');
+    log.childNodes[1].style.display.should.be.equal('');
   });
 
   it('should escape HTML', () => {

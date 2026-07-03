@@ -1,48 +1,50 @@
 {
   "name": "frontail",
-  "version": "4.9.2",
+  "version": "5.0.0",
   "description": "streaming logs to the browser",
-  "homepage": "https://github.com/mthenw/frontail",
+  "homepage": "https://github.com/gerwid/frontail",
   "author": "Maciej Winnicki <maciej.winnicki@gmail.com>",
+  "contributors": [
+    "gerwid <gerrit@die-wideras.de>"
+  ],
   "license": "MIT",
   "bin": "./bin/frontail",
   "dependencies": {
-    "CBuffer": "0.1.4",
-    "basic-auth-connect": "1.0.0",
-    "byline": "5.0.0",
-    "command-exists": "1.2.8",
-    "commander": "3.0.1",
-    "configstore": "4.0.0",
-    "connect": "3.7.0",
-    "cookie": "0.1.0",
-    "cookie-parser": "1.4.5",
-    "daemon-fix41": "1.1.2",
-    "express-session": "1.15.6",
-    "fs-tail-stream": "1.1.0",
-    "is-docker": "1.1.0",
-    "serve-static": "1.14.1",
-    "socket.io": "3.1.2",
-    "universal-analytics": "0.4.23",
-    "untildify": "3.0.2",
-    "uuid": "3.3.2"
+    "CBuffer": "^0.1.4",
+    "basic-auth-connect": "^1.1.0",
+    "byline": "^5.0.0",
+    "command-exists": "^1.2.9",
+    "commander": "^3.0.1",
+    "connect": "^3.7.0",
+    "cookie": "^1.0.2",
+    "cookie-parser": "^1.4.7",
+    "daemon-fix41": "^1.1.2",
+    "express-session": "^1.18.1",
+    "fs-tail-stream": "^1.1.0",
+    "serve-static": "^2.2.0",
+    "socket.io": "^4.8.1",
+    "untildify": "^3.0.2"
   },
   "devDependencies": {
-    "eslint": "~6.8.0",
-    "eslint-config-airbnb-base": "~14.0.0",
-    "eslint-config-prettier": "^6.10.1",
-    "eslint-plugin-import": "~2.20.0",
+    "@yao-pkg/pkg": "^6.9.0",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
     "jsdom": "~11.12.0",
-    "mocha": "~5.2.0",
-    "pkg": "~4.4.7",
-    "should": "~3.3.2",
-    "sinon": "~1.7.3",
-    "supertest": "^3.3.0",
-    "temp": "~0.8.1"
+    "mocha": "^10.8.2",
+    "should": "^13.2.3",
+    "sinon": "^17.0.1",
+    "supertest": "^7.1.4",
+    "temp": "^0.9.4"
   },
   "scripts": {
     "lint": "eslint .",
     "test": "mocha -r should --exit test/*.js",
     "pkg": "pkg --out-path=dist ."
+  },
+  "engines": {
+    "node": ">=18"
   },
   "pkg": {
     "assets": [
@@ -50,10 +52,10 @@
       "web/**/*"
     ],
     "targets": [
-      "node12-alpine-x64",
-      "node12-linux-x64",
-      "node12-macos-x64",
-      "node12-windows-x64"
+      "node20-alpine-x64",
+      "node20-linux-x64",
+      "node20-macos-x64",
+      "node20-win-x64"
     ]
   },
   "eslintConfig": {
@@ -80,7 +82,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/mthenw/frontail.git"
+    "url": "https://github.com/gerwid/frontail.git"
   },
   "keywords": [
     "tail",
