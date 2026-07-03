@@ -64,6 +64,11 @@ The bundled `compose.yaml` passes `--stdout`, so the tailed lines also show up i
 `docker compose logs -f frontail`. Remove that flag from the `command:` list if
 you only want them in the browser.
 
+On startup frontail prints `[frontail]`-prefixed diagnostics to stdout: version,
+listen addresses (local and network), the effective configuration and an
+`OK`/`WARN` health check for every tailed file — so `docker compose logs` tells
+you at a glance whether everything is fine.
+
   ```sh
   FRONTAIL_LOG_DIR=/var/log FRONTAIL_PORT=9500 docker compose up -d --build
   ```
