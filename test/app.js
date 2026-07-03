@@ -16,6 +16,11 @@ describe('browser application', () => {
       container: window.document.querySelector('.log'),
       filterInput: window.document.querySelector('#filter'),
       logSelect: window.document.querySelector('#logSelect'),
+      themeLink: window.document.querySelector('.theme-css'),
+      themeBtn: window.document.querySelector('#themeBtn'),
+      zebraBtn: window.document.querySelector('#zebraBtn'),
+      fontIncreaseBtn: window.document.querySelector('#fontIncBtn'),
+      fontDecreaseBtn: window.document.querySelector('#fontDecBtn'),
       pauseBtn: window.document.querySelector('#pauseBtn'),
       topbar: window.document.querySelector('.topbar'),
       body: window.document.querySelector('body'),
@@ -48,7 +53,12 @@ describe('browser application', () => {
     io = new events.EventEmitter();
     const html =
       '<title></title><body><div class="topbar"></div>' +
+      '<link class="theme-css" href="styles/dark.css"/>' +
       '<div class="log"></div><button type="button" id="pauseBtn"></button>' +
+      '<button type="button" id="themeBtn"></button>' +
+      '<button type="button" id="zebraBtn"></button>' +
+      '<button type="button" id="fontIncBtn"></button>' +
+      '<button type="button" id="fontDecBtn"></button>' +
       '<select id="logSelect" style="display: none;"></select>' +
       '<input type="test" id="filter"/></body>';
     const ansiup = fs.readFileSync('./web/assets/ansi_up.js', 'utf-8');
@@ -86,7 +96,7 @@ describe('browser application', () => {
     const line = window.document.querySelector('.line');
     clickOnElement(line);
 
-    line.className.should.be.equal('line-selected');
+    line.className.should.containEql('line-selected');
   });
 
   it('should deselect line when selected line clicked', () => {
@@ -96,7 +106,7 @@ describe('browser application', () => {
     clickOnElement(line);
     clickOnElement(line);
 
-    line.className.should.be.equal('line');
+    line.className.should.not.containEql('line-selected');
   });
 
   it('should limit number of lines in browser', () => {
@@ -204,6 +214,53 @@ describe('browser application', () => {
     log.childNodes.length.should.be.equal(2);
     log.childNodes[0].style.display.should.be.equal('none');
     log.childNodes[1].style.display.should.be.equal('');
+  });
+
+  it('should stripe alternate visible lines only', () => {
+    io.emit('line', 'line1');
+    io.emit('line', 'another'); // hidden by the URL filter `line.*`
+    io.emit('line', 'line2');
+
+    const log = window.document.querySelector('.log');
+    log.childNodes[0].className.should.not.containEql('zebra-alt');
+    log.childNodes[1].className.should.not.containEql('zebra-alt');
+    log.childNodes[2].className.should.containEql('zebra-alt');
+  });
+
+  it('should toggle zebra mode from the topbar button', () => {
+    const btn = window.document.querySelector('#zebraBtn');
+    const log = window.document.querySelector('.log');
+
+    clickOnElement(btn);
+    log.className.should.containEql('zebra');
+    btn.className.should.containEql('active');
+
+    clickOnElement(btn);
+    log.className.should.not.containEql('zebra');
+  });
+
+  it('should switch theme from the topbar button', () => {
+    const btn = window.document.querySelector('#themeBtn');
+    const link = window.document.querySelector('.theme-css');
+
+    clickOnElement(btn);
+    link.getAttribute('href').should.containEql('default.css');
+
+    clickOnElement(btn);
+    link.getAttribute('href').should.containEql('dark.css');
+  });
+
+  it('should change the log font size from the topbar buttons', () => {
+    const inc = window.document.querySelector('#fontIncBtn');
+    const dec = window.document.querySelector('#fontDecBtn');
+    const log = window.document.querySelector('.log');
+
+    clickOnElement(inc);
+    log.style.fontSize.should.be.equal('0.94em');
+
+    clickOnElement(dec);
+    clickOnElement(dec);
+    log.style.fontSize.should.be.equal('0.77em');
   });
 
   it('should escape HTML', () => {

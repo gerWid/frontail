@@ -96,6 +96,148 @@ window.App = (function app(window, document) {
   var _sourceFilter = 'all';
 
   /**
+   * @type {HTMLElement}
+   * @private
+   */
+  var _themeLink;
+
+  /**
+   * @type {HTMLElement}
+   * @private
+   */
+  var _zebraBtn;
+
+  /**
+   * @type {boolean}
+   * @private
+   */
+  var _zebraEnabled = false;
+
+  /**
+   * Zebra parity: true if the next appended visible line gets the alternate
+   * background.
+   *
+   * @type {boolean}
+   * @private
+   */
+  var _zebraAlt = false;
+
+  /**
+   * Log font scale in percent (100 = the theme default of 0.85em).
+   *
+   * @type {number}
+   * @private
+   */
+  var _fontScale = 100;
+
+  /**
+   * localStorage can be unavailable (privacy mode, old browsers); UI
+   * preferences then simply don't persist.
+   *
+   * @type {Storage}
+   * @private
+   */
+  var _storage = (function storageOrNull() {
+    try {
+      return window.localStorage;
+    } catch (e) {
+      return null;
+    }
+  }());
+
+  /**
+   * localStorage helpers.
+   *
+   * @private
+   */
+  var _storeGet = function(key) {
+    var value = null;
+    if (_storage) {
+      try {
+        value = _storage.getItem(key);
+      } catch (e) {
+        value = null;
+      }
+    }
+    return value;
+  };
+
+  var _storeSet = function(key, value) {
+    if (_storage) {
+      try {
+        _storage.setItem(key, value);
+      } catch (e) {
+        // storage full or blocked — preference just won't persist
+      }
+    }
+  };
+
+  /**
+   * Name of the currently loaded theme, derived from the stylesheet link.
+   *
+   * @return {String} 'dark' or 'default'
+   * @private
+   */
+  var _currentTheme = function() {
+    var href = _themeLink ? _themeLink.getAttribute('href') : '';
+    return /dark\.css/.test(href) ? 'dark' : 'default';
+  };
+
+  /**
+   * Switch the UI theme by swapping the stylesheet and persist the choice.
+   *
+   * @param {String} theme 'dark' or 'default'
+   * @private
+   */
+  var _applyTheme = function(theme) {
+    var href;
+    if (!_themeLink) {
+      return;
+    }
+    href = _themeLink.getAttribute('href');
+    _themeLink.setAttribute('href', href.replace(/[^/]+\.css/, theme + '.css'));
+    _storeSet('frontail-theme', theme);
+  };
+
+  /**
+   * Scale the log font size. 100% equals the theme base of 0.85em; clamped to
+   * 50–300% so the text always stays readable.
+   *
+   * @param {number} scale percent
+   * @private
+   */
+  var _applyFontScale = function(scale) {
+    var clamped = Math.min(300, Math.max(50, scale));
+    _fontScale = clamped;
+    _logContainer.style.fontSize = (Math.round((85 * clamped) / 100) / 100) + 'em';
+    _storeSet('frontail-font-size', String(clamped));
+  };
+
+  /**
+   * Enable/disable zebra striping and persist the choice. The stripe classes
+   * are always maintained on the lines; this only toggles whether the theme
+   * colors them.
+   *
+   * @param {boolean} enabled
+   * @private
+   */
+  var _setZebra = function(enabled) {
+    _zebraEnabled = enabled;
+    if (enabled) {
+      _logContainer.classList.add('zebra');
+      if (_zebraBtn) {
+        _zebraBtn.classList.add('active');
+      }
+    } else {
+      _logContainer.classList.remove('zebra');
+      if (_zebraBtn) {
+        _zebraBtn.classList.remove('active');
+      }
+    }
+    _storeSet('frontail-zebra', enabled ? '1' : '0');
+  };
+
+  /**
    * Test if a line matches the current text filter. Invalid regexes never hide
    * anything (treated as "matches").
    *
@@ -228,22 +370,32 @@ window.App = (function app(window, document) {
    */
   var _filterLogs = function() {
     var collection = _logContainer.childNodes;
-    var i = collection.length;
+    var { length } = collection;
     var element;
     var inner;
+    var i;
 
-    if (i === 0) {
+    if (length === 0) {
       return;
     }
 
-    while (i) {
-      element = collection[i - 1];
+    // walk in DOM order so zebra stripes are re-assigned to alternating
+    // *visible* lines (hidden lines must not break the pattern)
+    _zebraAlt = false;
+    for (i = 0; i < length; i += 1) {
+      element = collection[i];
       _filterElement(element);
+      element.classList.remove('zebra-alt');
+      if (element.style.display !== 'none') {
+        if (_zebraAlt) {
+          element.classList.add('zebra-alt');
+        }
+        _zebraAlt = !_zebraAlt;
+      }
       inner = element.querySelector('.inner-line');
       if (inner) {
         _applySearchHighlight(inner);
       }
-      i -= 1;
     }
     window.scrollTo(0, document.body.scrollHeight);
   };
@@ -381,12 +533,16 @@ window.App = (function app(window, document) {
      */
     init: function init(opts) {
       var self = this;
+      var storedTheme;
+      var storedFontScale;
 
       // Elements
       _logContainer = opts.container;
       _filterInput = opts.filterInput;
       _filterInput.focus();
       _logSelect = opts.logSelect;
+      _themeLink = opts.themeLink;
+      _zebraBtn = opts.zebraBtn;
       _pauseBtn = opts.pauseBtn;
       _topbar = opts.topbar;
       _body = opts.body;
@@ -412,6 +568,45 @@ window.App = (function app(window, document) {
           _sourceFilter = this.value;
           _filterLogs();
         });
+      }
+
+      // Theme toggle bind
+      if (opts.themeBtn) {
+        opts.themeBtn.addEventListener('click', function() {
+          _applyTheme(_currentTheme() === 'dark' ? 'default' : 'dark');
+        });
+      }
+
+      // Zebra stripes toggle bind
+      if (_zebraBtn) {
+        _zebraBtn.addEventListener('click', function() {
+          _setZebra(!_zebraEnabled);
+        });
+      }
+
+      // Font size binds
+      if (opts.fontIncreaseBtn) {
+        opts.fontIncreaseBtn.addEventListener('click', function() {
+          _applyFontScale(_fontScale + 10);
+        });
+      }
+      if (opts.fontDecreaseBtn) {
+        opts.fontDecreaseBtn.addEventListener('click', function() {
+          _applyFontScale(_fontScale - 10);
+        });
+      }
+
+      // Restore UI preferences persisted in the browser
+      storedTheme = _storeGet('frontail-theme');
+      if (storedTheme && storedTheme !== _currentTheme()) {
+        _applyTheme(storedTheme);
+      }
+      storedFontScale = parseInt(_storeGet('frontail-font-size'), 10);
+      if (!Number.isNaN(storedFontScale)) {
+        _applyFontScale(storedFontScale);
+      }
+      if (_storeGet('frontail-zebra') === '1') {
+        _setZebra(true);
       }
 
       // Pause button bind
@@ -486,6 +681,7 @@ window.App = (function app(window, document) {
         >= document.body.offsetHeight;
       var div = document.createElement('div');
       var p = document.createElement('p');
+      var replaced;
       p.className = 'inner-line';
 
       // convert ansi color codes to html && escape HTML tags
@@ -500,18 +696,26 @@ window.App = (function app(window, document) {
       }
       div = _highlightLine(data, div);
       div.addEventListener('click', function click() {
-        if (this.className.indexOf('selected') === -1) {
-          this.className = 'line-selected';
-        } else {
-          this.className = 'line';
-        }
+        // toggle instead of replacing className so zebra stripes survive
+        this.classList.toggle('line-selected');
       });
 
       div.appendChild(p);
       _filterElement(div);
       if (replace) {
-        _logContainer.replaceChild(div, _logContainer.lastChild);
+        // keep the stripe of the line being replaced (parity is unchanged)
+        replaced = _logContainer.lastChild;
+        if (replaced && replaced.classList.contains('zebra-alt')) {
+          div.classList.add('zebra-alt');
+        }
+        _logContainer.replaceChild(div, replaced);
       } else {
+        if (div.style.display !== 'none') {
+          if (_zebraAlt) {
+            div.classList.add('zebra-alt');
+          }
+          _zebraAlt = !_zebraAlt;
+        }
         _logContainer.appendChild(div);
       }
 

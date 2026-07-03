@@ -58,6 +58,37 @@ body {
     background-color: var(--md-surface-4dp);
 }
 
+/* Topbar tool buttons on the 4dp app bar surface */
+.btn-tool {
+  background-color: var(--md-surface-4dp);
+  border: 1px solid transparent;
+  color: var(--md-on-surface-medium);
+}
+
+/* Active toggle: Material "activated" state = primary at 24% */
+.btn-tool.active {
+  background-color: rgba(187, 134, 252, 0.24);
+  border-color: transparent;
+}
+
+.btn-theme {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff99' viewBox='0 0 24 24'><path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'></path></svg>")
+    no-repeat center center;
+  background-color: var(--md-surface-4dp);
+  background-size: 16px 16px;
+}
+
+.btn-zebra {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff99' viewBox='0 0 8 8'><path d='M0 1h8v2H0zM0 5h8v2H0z'></path></svg>")
+    no-repeat center center;
+  background-color: var(--md-surface-4dp);
+  background-size: 14px 14px;
+}
+
+.btn-zebra.active {
+  background-color: rgba(187, 134, 252, 0.24);
+}
+
 /* Text field and dropdown: 1dp surface, high-emphasis text */
 .form-control {
   border: 0;
@@ -117,4 +148,15 @@ body {
 .log .search-highlight {
   background-color: var(--md-secondary);
   color: #121212;
+}
+
+/* Zebra stripes: alternate between the base background (#121212) and the
+ * 1dp surface (#1e1e1e) — high-emphasis text stays >= 13:1 on both */
+.log.zebra .zebra-alt {
+  background-color: var(--md-surface-1dp);
+}
+
+/* selection always wins over the zebra tint */
+.log.zebra .line-selected {
+  background-color: rgba(187, 134, 252, 0.24);
 }

@@ -44,6 +44,43 @@ body {
   margin: 8px 0;
 }
 
+/* Shared style for the small topbar tool buttons (A-, A+, zebra, theme, pause) */
+.btn-tool {
+  margin: 8px 0 8px 4px;
+  background-color: #e2e6ea;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  display: inline-block;
+  height: 34px;
+  width: 34px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  line-height: 32px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.btn-tool.active {
+  background-color: #c8cdd2;
+  border-color: #999;
+}
+
+.btn-theme {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23999' viewBox='0 0 24 24'><path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'></path></svg>")
+    no-repeat center center;
+  background-color: #e2e6ea;
+  background-size: 16px 16px;
+}
+
+.btn-zebra {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23999' viewBox='0 0 8 8'><path d='M0 1h8v2H0zM0 5h8v2H0z'></path></svg>")
+    no-repeat center center;
+  background-color: #e2e6ea;
+  background-size: 14px 14px;
+}
+
 .no-horiz-padding {
   padding-left: 0px;
   padding-right: 0px;
@@ -90,4 +127,14 @@ body {
 .log .search-highlight {
   background-color: #ffe000;
   color: black;
+}
+
+/* Zebra stripes: every other visible line gets a subtle tint */
+.log.zebra .zebra-alt {
+  background-color: #f2f2f2;
+}
+
+/* selection always wins over the zebra tint */
+.log.zebra .line-selected {
+  background-color: #ffb2b0;
 }

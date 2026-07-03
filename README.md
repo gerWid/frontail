@@ -19,7 +19,9 @@
 - marking logs
 - pausing logs
 - number of unread logs in favicon
-- themes (default, dark)
+- themes (default, dark), switchable [directly in the UI](#ui-controls)
+- adjustable log font size (A− / A+ [in the topbar](#ui-controls))
+- optional [zebra-striped lines](#ui-controls)
 - [highlighting](#highlighting)
 - search (`Tab` to focus, `Esc` to clear) with [matches highlighted](#search) in the shown lines
 - set filter from url parameter `filter`
@@ -106,6 +108,19 @@ When more than one file is tailed, a dropdown appears in the top bar. Pick a fil
 to show only its lines, or choose **All logs** to see every file merged together
 (the default). The source filter combines with the search filter, so you can, for
 example, search within a single log.
+
+### UI controls
+
+The topbar offers, next to the pause button:
+
+- **A− / A+** – decrease/increase the log font size (50%–300%)
+- **stripes icon** – toggle zebra striping: alternate visible lines get a subtly
+  tinted background (dark theme: `#121212`/`#1e1e1e`, light theme: white/`#f2f2f2`),
+  which makes long lines much easier to follow
+- **moon icon** – switch between the dark and light theme on the fly
+
+All three choices are saved in the browser (localStorage) and restored on the
+next visit. The `-t/--theme` server option only sets the initial default.
 
 ### Search
 
