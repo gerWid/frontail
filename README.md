@@ -56,6 +56,7 @@ Configure it either by editing `compose.yaml` directly or via environment variab
 
 - `FRONTAIL_LOG_DIR` – host directory mounted read-only at `/log` (default `/var/log`)
 - `FRONTAIL_PORT` – host port to expose (default `9001`)
+- `FRONTAIL_THEME` – UI theme, `dark` (default) or `default` (light)
 
   ```sh
   FRONTAIL_LOG_DIR=/var/log FRONTAIL_PORT=9500 docker compose up -d --build

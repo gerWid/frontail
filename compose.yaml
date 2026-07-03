@@ -16,6 +16,8 @@ services:
     # your file(s). List several files to get a dropdown in the UI that lets you
     # switch between them (or view all at once).
     command:
+      - "--theme"
+      - "${FRONTAIL_THEME:-dark}"
       - "--ui-highlight"
       - "/log/dpkg.log"
       - "/log/alternatives.log"

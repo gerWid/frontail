@@ -1,44 +1,90 @@
 @import 'default.css';
 
+/*
+ * Dark theme following the Material Design dark theme guidelines
+ * (https://m2.material.io/design/color/dark-theme.html):
+ *
+ * - base background #121212, never pure black
+ * - elevated surfaces are lightened with white overlays
+ *   (app bar / 4dp -> 9% overlay ~= #272727, inputs / 1dp -> 5% ~= #1e1e1e)
+ * - on-surface text uses white at fixed emphasis levels:
+ *   87% high emphasis, 60% medium emphasis, 38% disabled
+ * - accent colors are desaturated: primary #bb86fc, secondary #03dac6
+ * - error is #cf6679
+ */
+
+:root {
+  --md-background: #121212;
+  --md-surface-1dp: #1e1e1e;
+  --md-surface-4dp: #272727;
+  --md-on-surface-high: rgba(255, 255, 255, 0.87);
+  --md-on-surface-medium: rgba(255, 255, 255, 0.6);
+  --md-on-surface-disabled: rgba(255, 255, 255, 0.38);
+  --md-primary: #bb86fc;
+  --md-secondary: #03dac6;
+  --md-error: #cf6679;
+}
+
 body {
   padding-top: 4em;
-  background-color: #2f3238;
+  background-color: var(--md-background);
 }
 
 .no-topbar {
   padding-top: 10px;
 }
 
+/* App bar: 4dp elevated surface */
 .navbar {
-  background-color: #26292e;
+  background-color: var(--md-surface-4dp);
   border: 0;
 }
 
 .navbar-inverse .navbar-brand,
 .navbar-inverse .navbar-brand:hover {
-  color: #999;
+  color: var(--md-on-surface-medium);
 }
 
+/* Icon buttons use medium-emphasis white (#ffffff99) */
 .btn-pause {
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%237f8289' viewBox='0 0 8 8'><path d='M1 1v6h2v-6h-2zm4 0v6h2v-6h-2z'></path></svg>") no-repeat center center;
-    background-color: #2f3238;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff99' viewBox='0 0 8 8'><path d='M1 1v6h2v-6h-2zm4 0v6h2v-6h-2z'></path></svg>") no-repeat center center;
+    background-color: var(--md-surface-4dp);
     border: 1px solid transparent;
 }
 
+/* Active (paused) state switches to the primary accent */
 .btn-pause.play {
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%237f8289' viewBox='0 0 8 8'><path d='M1 1v6l6-3-6-3z'></path></svg>") no-repeat center center;
-    background-color: #2f3238;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23bb86fc' viewBox='0 0 8 8'><path d='M1 1v6l6-3-6-3z'></path></svg>") no-repeat center center;
+    background-color: var(--md-surface-4dp);
 }
 
+/* Text field and dropdown: 1dp surface, high-emphasis text */
 .form-control {
   border: 0;
-  color: #7f8289;
-  background-color: #2f3238;
+  color: var(--md-on-surface-high);
+  background-color: var(--md-surface-1dp);
 }
 
+.form-control::placeholder {
+  color: var(--md-on-surface-disabled);
+}
+
+.form-control:focus {
+  border-color: var(--md-primary);
+  outline: 0;
+  -webkit-box-shadow: 0 0 0 1px var(--md-primary);
+  box-shadow: 0 0 0 1px var(--md-primary);
+}
+
+.log-select option {
+  color: var(--md-on-surface-high);
+  background-color: var(--md-surface-1dp);
+}
+
+/* Log body: high-emphasis text on the base background */
 .log {
   white-space: pre-wrap;
-  color: #7f8289;
+  color: var(--md-on-surface-high);
   font-size: 0.85em;
   background: inherit;
   border: 0;
@@ -62,6 +108,13 @@ body {
   text-indent: 0;
 }
 
+/* Selected line: primary accent as a 24% state overlay (Material "activated") */
 .log .line-selected {
-  background-color: #302436;
+  background-color: rgba(187, 134, 252, 0.24);
+}
+
+/* Search matches: secondary accent; dark text on it for contrast (>= 4.5:1) */
+.log .search-highlight {
+  background-color: var(--md-secondary);
+  color: #121212;
 }
