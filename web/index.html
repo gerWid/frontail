@@ -13,10 +13,9 @@
     <nav class="topbar navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-sm-4">
-                    <span class="navbar-brand text-overflow" title="__TITLE__">tail -f __TITLE__</span>
-                </div>
-                <div class="col-sm-2">
+                <div class="col-sm-6 brand-col">
+                    <span class="navbar-brand brand-prefix">tail -f</span>
+                    <span class="navbar-brand text-overflow brand-files" title="__TITLE__">__TITLE__</span>
                     <select class="form-control log-select" title="Choose which log to show" style="display: none;"></select>
                 </div>
                 <div class="col-sm-3 text-right">
@@ -55,6 +54,7 @@
             container: document.getElementsByClassName('log')[0],
             filterInput: document.getElementsByClassName('query')[0],
             logSelect: document.getElementsByClassName('log-select')[0],
+            brandFiles: document.getElementsByClassName('brand-files')[0],
             pauseBtn: document.getElementsByClassName('btn-pause')[0],
             themeLink: document.getElementsByClassName('theme-css')[0],
             themeBtn: document.getElementsByClassName('btn-theme')[0],

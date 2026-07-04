@@ -16,6 +16,7 @@ describe('browser application', () => {
       container: window.document.querySelector('.log'),
       filterInput: window.document.querySelector('#filter'),
       logSelect: window.document.querySelector('#logSelect'),
+      brandFiles: window.document.querySelector('#brandFiles'),
       themeLink: window.document.querySelector('.theme-css'),
       themeBtn: window.document.querySelector('#themeBtn'),
       zebraBtn: window.document.querySelector('#zebraBtn'),
@@ -59,6 +60,7 @@ describe('browser application', () => {
       '<button type="button" id="zebraBtn"></button>' +
       '<button type="button" id="fontIncBtn"></button>' +
       '<button type="button" id="fontDecBtn"></button>' +
+      '<span id="brandFiles">/log/only.log</span>' +
       '<select id="logSelect" style="display: none;"></select>' +
       '<input type="test" id="filter"/></body>';
     const ansiup = fs.readFileSync('./web/assets/ansi_up.js', 'utf-8');
@@ -191,11 +193,24 @@ describe('browser application', () => {
   it('should show the log dropdown even for a single file', () => {
     const logSelect = window.document.querySelector('#logSelect');
 
-    io.emit('options:files', ['only.log']);
+    io.emit('options:files', ['/log/only.log']);
     logSelect.style.display.should.not.be.equal('none');
     // no "All logs" entry needed for a single source
     logSelect.querySelectorAll('option').length.should.be.equal(1);
-    logSelect.querySelectorAll('option')[0].value.should.be.equal('only.log');
+    logSelect
+      .querySelectorAll('option')[0]
+      .value.should.be.equal('/log/only.log');
+    // the option shows the absolute path, not just the file name
+    logSelect
+      .querySelectorAll('option')[0]
+      .textContent.should.be.equal('/log/only.log');
+  });
+
+  it('should replace the static brand file list with the dropdown', () => {
+    const brandFiles = window.document.querySelector('#brandFiles');
+
+    io.emit('options:files', ['/log/only.log']);
+    brandFiles.style.display.should.be.equal('none');
   });
 
   it('should offer "All logs" for multiple files', () => {

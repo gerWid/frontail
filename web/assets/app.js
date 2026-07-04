@@ -88,6 +88,15 @@ window.App = (function app(window, document) {
   var _logSelect;
 
   /**
+   * Static file list in the topbar brand ("tail -f ..."); replaced by the
+   * dropdown once the server has sent the list of files.
+   *
+   * @type {HTMLElement}
+   * @private
+   */
+  var _brandFiles;
+
+  /**
    * Currently selected source file, or 'all' to show every log.
    *
    * @type {String}
@@ -402,8 +411,9 @@ window.App = (function app(window, document) {
   };
 
   /**
-   * Build the log-selection dropdown from the list of tailed files. Hidden when
-   * only a single source is tailed.
+   * Build the log-selection dropdown from the list of tailed files. It sits
+   * right after the "tail -f" label in the topbar and shows the absolute
+   * path of every file, so brand + dropdown read as "tail -f /log/messages".
    *
    * The dropdown is always shown, even for a single file; the merged
    * "All logs" entry is only offered when there is more than one source.
@@ -434,9 +444,7 @@ window.App = (function app(window, document) {
     files.forEach(function(file) {
       var option = document.createElement('option');
       option.value = file;
-      // show just the file name, keep the full path in the tooltip
-      option.textContent = file.replace(/^.*[\\/]/, '');
-      option.title = file;
+      option.textContent = file;
       _logSelect.appendChild(option);
     });
 
@@ -446,6 +454,10 @@ window.App = (function app(window, document) {
       _filterLogs();
     }
 
+    // the dropdown replaces the static file list next to "tail -f"
+    if (_brandFiles) {
+      _brandFiles.style.display = 'none';
+    }
     _logSelect.style.display = '';
   };
 
@@ -557,6 +569,7 @@ window.App = (function app(window, document) {
       _filterInput = opts.filterInput;
       _filterInput.focus();
       _logSelect = opts.logSelect;
+      _brandFiles = opts.brandFiles;
       _themeLink = opts.themeLink;
       _zebraBtn = opts.zebraBtn;
       _pauseBtn = opts.pauseBtn;

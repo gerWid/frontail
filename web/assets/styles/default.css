@@ -40,8 +40,30 @@ body {
   padding: 8px 0;
 }
 
+/* Brand column: "tail -f" label and the log dropdown form one line, so it
+ * reads like the actual command, e.g. `tail -f /log/messages` */
+.brand-col {
+  display: flex;
+  align-items: center;
+}
+
+.brand-col .navbar-brand {
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.brand-col .brand-prefix {
+  flex: 0 0 auto;
+  padding-right: 8px;
+}
+
 .log-select {
   margin: 8px 0;
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Shared style for the small topbar tool buttons (A-, A+, zebra, theme, pause) */
