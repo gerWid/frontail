@@ -62,7 +62,17 @@ Configure it either by editing `compose.yaml` directly or via environment variab
 
 - `FRONTAIL_LOG_DIR` – host directory mounted read-only at `/log` (default `/var/log`)
 - `FRONTAIL_PORT` – host port to expose (default `9001`)
+- `FRONTAIL_BIND` – host interface the port is bound to (default `127.0.0.1`,
+  the safe choice behind a reverse proxy; set `0.0.0.0` to expose frontail
+  directly on the network)
 - `FRONTAIL_THEME` – UI theme, `dark` (default) or `default` (light)
+
+The bundled compose file is hardened: the container runs as an unprivileged
+user (group `adm` so it can read the root-owned logs in `/var/log`), with a
+read-only filesystem, all capabilities dropped and `no-new-privileges`. TLS is
+best terminated at a reverse proxy in front of frontail (see
+[Running behind nginx](#running-behind-nginx)); for end-to-end encryption
+frontail also supports HTTPS directly via `-k`/`-c`.
 
 The bundled `compose.yaml` passes `--stdout`, so the tailed lines also show up in
 `docker compose logs -f frontail`. Remove that flag from the `command:` list if
@@ -123,7 +133,10 @@ search within a single log.
 
 With `--log-dir <dir>` every tailable log file found in `<dir>` is offered in the
 dropdown as well (rotated/compressed/binary files like `*.1`, `*.gz` or `wtmp`
-are skipped; the directory is scanned once at startup). Which file is preselected:
+are skipped). The directory is rescanned on every page load, and the small
+refresh button next to the dropdown rescans it on demand — log files created
+in the meantime then show up in the dropdown without a reload. Which file is
+preselected:
 
 1. the first file passed as `[file ...]` argument,
 2. otherwise `messages` in the log dir,

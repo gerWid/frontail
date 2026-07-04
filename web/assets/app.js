@@ -97,6 +97,15 @@ window.App = (function app(window, document) {
   var _brandFiles;
 
   /**
+   * Button next to the dropdown that asks the server to rescan --log-dir
+   * for new files; shown together with the dropdown.
+   *
+   * @type {HTMLElement}
+   * @private
+   */
+  var _rescanBtn;
+
+  /**
    * Currently selected source file, or 'all' to show every log.
    *
    * @type {String}
@@ -427,10 +436,15 @@ window.App = (function app(window, document) {
    */
   var _buildFileDropdown = function(files, defaultFile) {
     var allOption;
+    var previous;
 
     if (!_logSelect || !files || files.length === 0) {
       return;
     }
+
+    // the list is also re-sent when a new file appears in --log-dir; in that
+    // case keep the user's current choice instead of re-applying the default
+    previous = _logSelect.style.display !== 'none' ? _logSelect.value : '';
 
     _logSelect.innerHTML = '';
 
@@ -448,7 +462,9 @@ window.App = (function app(window, document) {
       _logSelect.appendChild(option);
     });
 
-    if (defaultFile && files.indexOf(defaultFile) !== -1) {
+    if (previous && (previous === 'all' || files.indexOf(previous) !== -1)) {
+      _logSelect.value = previous;
+    } else if (defaultFile && files.indexOf(defaultFile) !== -1) {
       _logSelect.value = defaultFile;
       _sourceFilter = defaultFile;
       _filterLogs();
@@ -459,6 +475,9 @@ window.App = (function app(window, document) {
       _brandFiles.style.display = 'none';
     }
     _logSelect.style.display = '';
+    if (_rescanBtn) {
+      _rescanBtn.style.display = '';
+    }
   };
 
   /**
@@ -570,6 +589,7 @@ window.App = (function app(window, document) {
       _filterInput.focus();
       _logSelect = opts.logSelect;
       _brandFiles = opts.brandFiles;
+      _rescanBtn = opts.rescanBtn;
       _themeLink = opts.themeLink;
       _zebraBtn = opts.zebraBtn;
       _pauseBtn = opts.pauseBtn;
@@ -596,6 +616,13 @@ window.App = (function app(window, document) {
         _logSelect.addEventListener('change', function() {
           _sourceFilter = this.value;
           _filterLogs();
+        });
+      }
+
+      // Rescan button bind: ask the server to look for new log files
+      if (_rescanBtn) {
+        _rescanBtn.addEventListener('click', function() {
+          _socket.emit('rescan');
         });
       }
 

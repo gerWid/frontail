@@ -17,6 +17,7 @@
                     <span class="navbar-brand brand-prefix">tail -f</span>
                     <span class="navbar-brand text-overflow brand-files" title="__TITLE__">__TITLE__</span>
                     <select class="form-control log-select" title="Choose which log to show" style="display: none;"></select>
+                    <button type="button" class="btn btn-light btn-tool btn-rescan" title="Scan the log folder for new files" style="display: none;"></button>
                 </div>
                 <div class="col-sm-3 text-right">
                     <button type="button" class="btn btn-light btn-tool btn-font-dec" title="Decrease font size">A&minus;</button>
@@ -55,6 +56,7 @@
             filterInput: document.getElementsByClassName('query')[0],
             logSelect: document.getElementsByClassName('log-select')[0],
             brandFiles: document.getElementsByClassName('brand-files')[0],
+            rescanBtn: document.getElementsByClassName('btn-rescan')[0],
             pauseBtn: document.getElementsByClassName('btn-pause')[0],
             themeLink: document.getElementsByClassName('theme-css')[0],
             themeBtn: document.getElementsByClassName('btn-theme')[0],

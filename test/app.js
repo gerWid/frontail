@@ -17,6 +17,7 @@ describe('browser application', () => {
       filterInput: window.document.querySelector('#filter'),
       logSelect: window.document.querySelector('#logSelect'),
       brandFiles: window.document.querySelector('#brandFiles'),
+      rescanBtn: window.document.querySelector('#rescanBtn'),
       themeLink: window.document.querySelector('.theme-css'),
       themeBtn: window.document.querySelector('#themeBtn'),
       zebraBtn: window.document.querySelector('#zebraBtn'),
@@ -62,6 +63,7 @@ describe('browser application', () => {
       '<button type="button" id="fontDecBtn"></button>' +
       '<span id="brandFiles">/log/only.log</span>' +
       '<select id="logSelect" style="display: none;"></select>' +
+      '<button type="button" id="rescanBtn" style="display: none;"></button>' +
       '<input type="test" id="filter"/></body>';
     const ansiup = fs.readFileSync('./web/assets/ansi_up.js', 'utf-8');
     const src = fs.readFileSync('./web/assets/app.js', 'utf-8');
@@ -237,6 +239,37 @@ describe('browser application', () => {
     log.childNodes.length.should.be.equal(2);
     log.childNodes[0].style.display.should.be.equal('none');
     log.childNodes[1].style.display.should.be.equal('');
+  });
+
+  it('should ask the server for a rescan when the button is clicked', () => {
+    const btn = window.document.querySelector('#rescanBtn');
+    let rescans = 0;
+    io.on('rescan', () => {
+      rescans += 1;
+    });
+
+    io.emit('options:files', ['/log/only.log']);
+    // the button appears together with the dropdown
+    btn.style.display.should.not.be.equal('none');
+
+    clickOnElement(btn);
+    rescans.should.be.equal(1);
+  });
+
+  it('should keep the selection when the file list is refreshed', () => {
+    const logSelect = window.document.querySelector('#logSelect');
+    const event = window.document.createEvent('Event');
+
+    io.emit('options:files', ['a.log', 'b.log'], 'a.log');
+    logSelect.value = 'b.log';
+    event.initEvent('change', true, true);
+    logSelect.dispatchEvent(event);
+
+    // a new file appeared in --log-dir; the server re-sends the list
+    io.emit('options:files', ['a.log', 'b.log', 'c.log'], 'a.log');
+
+    logSelect.querySelectorAll('option').length.should.be.equal(4); // All + 3
+    logSelect.value.should.be.equal('b.log');
   });
 
   it('should preselect the default source in the dropdown', () => {

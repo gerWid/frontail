@@ -10,6 +10,20 @@ describe('connectBuilder', () => {
     connectBuilder().build().should.have.property('listen');
   });
 
+  it('should set security headers', (done) => {
+    const app = connectBuilder('/').build();
+    app.use((req, res) => {
+      res.end();
+    });
+
+    request(app)
+      .get('/')
+      .expect('X-Content-Type-Options', 'nosniff')
+      .expect('X-Frame-Options', 'SAMEORIGIN')
+      .expect('Referrer-Policy', 'no-referrer')
+      .expect(200, done);
+  });
+
   it('should build app requiring authorized user', (done) => {
     const app = connectBuilder('/').authorize('user', 'pass').build();
 

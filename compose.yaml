@@ -4,9 +4,26 @@ services:
     image: frontail:local
     container_name: frontail
     restart: unless-stopped
+    # --- hardening ---------------------------------------------------------
+    # unprivileged user; group 4 (adm) is what Debian/Ubuntu use for reading
+    # the root-owned files in /var/log
+    user: "1000:4"
+    # frontail never writes to disk
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # reaps the spawned `tail` child processes
+    init: true
+    # -----------------------------------------------------------------------
     ports:
-      # host:container — change the host port via FRONTAIL_PORT if 9001 is taken
-      - "${FRONTAIL_PORT:-9001}:9001"
+      # Bound to localhost only — the safe default when frontail sits behind a
+      # reverse proxy (which should be the one doing TLS + auth). Set
+      # FRONTAIL_BIND=0.0.0.0 to expose frontail directly on the network.
+      - "${FRONTAIL_BIND:-127.0.0.1}:${FRONTAIL_PORT:-9001}:9001"
     volumes:
       # Mount the host log directory read-only into the container at /log.
       # Point FRONTAIL_LOG_DIR at wherever your logs live on the host.

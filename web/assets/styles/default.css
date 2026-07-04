@@ -66,6 +66,15 @@ body {
   min-width: 0;
 }
 
+/* Rescan button next to the dropdown: looks for new files in --log-dir */
+.btn-rescan {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23999' viewBox='0 0 24 24'><path d='M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z'/></svg>")
+    no-repeat center center;
+  background-color: #e2e6ea;
+  background-size: 16px 16px;
+  flex: 0 0 auto;
+}
+
 /* Shared style for the small topbar tool buttons (A-, A+, zebra, theme, pause) */
 .btn-tool {
   margin: 8px 0 8px 4px;

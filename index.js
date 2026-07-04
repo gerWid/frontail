@@ -30,7 +30,7 @@ if (program.args.length === 0 && !program.logDir) {
  */
 const doAuthorization = !!(program.user && program.password);
 const doSecure = !!(program.key && program.certificate);
-const sessionSecret = String(+new Date()) + Math.random();
+const sessionSecret = crypto.randomBytes(32).toString('hex');
 const files = program.args.join(' ') || `${program.logDir}/*`;
 const filesNamespace = crypto.createHash('md5').update(files).digest('hex');
 const urlPath = program.urlPath.replace(/\/$/, ''); // remove trailing slash
@@ -167,6 +167,9 @@ if (program.daemonize) {
     ? null
     : logDirScanner.pickDefault(program.args, fileSources);
 
+  // `[frontail]`-prefixed status output, distinguishable from --stdout lines
+  const logStartup = (msg) => console.log(`[frontail] ${msg}`);
+
   /**
    * Tail each file with its own tailer so every emitted line can be tagged
    * with its source. This lets the UI offer a dropdown to switch between logs
@@ -174,7 +177,8 @@ if (program.daemonize) {
    */
   const filesSocket = io.of(`/${filesNamespace}`);
 
-  const tailers = sources.map((source) => {
+  const tailers = [];
+  const startTailer = (source) => {
     const target = isStdin ? ['-'] : [source];
     const tailer = tail(target, {
       buffer: program.number,
@@ -187,8 +191,41 @@ if (program.daemonize) {
         console.log(sources.length > 1 ? `${source}: ${line}` : line);
       }
     });
-    return { source, tailer };
-  });
+    tailers.push({ source, tailer });
+  };
+  sources.forEach(startTailer);
+
+  /**
+   * Log files created in --log-dir after startup are picked up too: the
+   * directory is rescanned on every page load and whenever the rescan button
+   * next to the dropdown is pressed. New files get their own tailer, and
+   * connected browsers receive the updated list for the dropdown.
+   */
+  let lastScan = 0;
+  const rescanLogDir = () => {
+    let changed = false;
+    if (!logDir || isStdin) {
+      return;
+    }
+    // spam guard — the browser button lets any client trigger a scan
+    if (Date.now() - lastScan < 1000) {
+      return;
+    }
+    lastScan = Date.now();
+    logDirScanner.discover(logDir).files.forEach((file) => {
+      const key = path.resolve(file);
+      if (!seenPaths.has(key)) {
+        seenPaths.add(key);
+        sources.push(file);
+        startTailer(file);
+        logStartup(`new log file detected: ${file}`);
+        changed = true;
+      }
+    });
+    if (changed) {
+      filesSocket.emit('options:files', sources, defaultSource);
+    }
+  };
 
   /**
    * When connected send starting data
@@ -208,7 +245,11 @@ if (program.daemonize) {
       socket.emit('options:highlightConfig', highlightConfig);
     }
 
+    rescanLogDir();
     socket.emit('options:files', sources, defaultSource);
+
+    // manual rescan triggered by the button next to the UI dropdown
+    socket.on('rescan', rescanLogDir);
 
     tailers.forEach(({ source, tailer }) => {
       tailer.getBuffer().forEach((line) => {
@@ -219,10 +260,8 @@ if (program.daemonize) {
 
   /**
    * Startup diagnostics — status, addresses and a health check for every
-   * source, prefixed so they are distinguishable from `--stdout` log lines.
+   * source.
    */
-  const logStartup = (msg) => console.log(`[frontail] ${msg}`);
-
   const formatBytes = (size) => {
     const units = ['B', 'kB', 'MB', 'GB'];
     const i = Math.min(
