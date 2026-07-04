@@ -31,6 +31,24 @@ describe('logDir', () => {
       ]);
     });
 
+    it('follows symlinks to regular files and skips broken ones', () => {
+      const dir = temp.mkdirSync('frontail-logdir-links');
+      fs.mkdirSync(path.join(dir, 'targets'));
+      fs.writeFileSync(path.join(dir, 'targets', 'unifi.orig'), 'x');
+      fs.symlinkSync(
+        path.join(dir, 'targets', 'unifi.orig'),
+        path.join(dir, 'unifi.log')
+      );
+      fs.symlinkSync(
+        path.join(dir, 'targets', 'gone.orig'),
+        path.join(dir, 'broken.log')
+      );
+
+      const result = logDir.discover(dir);
+
+      result.files.should.be.eql([path.join(dir, 'unifi.log')]);
+    });
+
     it('reports an error for a missing directory', () => {
       const result = logDir.discover('/does/not/exist');
 
