@@ -420,15 +420,47 @@ window.App = (function app(window, document) {
   };
 
   /**
+   * Read the source selected in a previous session from URL parameter
+   * `source`
+   *
+   * @function
+   * @return {String} source file path, 'all' or ''
+   * @private
+   */
+  var _getSourceFromURL = function(uri) {
+    var _url = new URL(uri);
+    return _url.searchParams.get('source') || '';
+  };
+
+  /**
+   * Set parameter `source` in URL so the chosen log survives page reloads
+   *
+   * @function
+   * @private
+   */
+  var _setSourceParam = function(value, uri) {
+    var _url = new URL(uri);
+    var _params = new URLSearchParams(_url.search.slice(1));
+    if (value === '') {
+      _params.delete('source');
+    } else {
+      _params.set('source', value);
+    }
+    _url.search = _params.toString();
+    window.history.replaceState(null, document.title, _url.toString());
+  };
+
+  /**
    * Build the log-selection dropdown from the list of tailed files. It sits
    * right after the "tail -f" label in the topbar and shows the absolute
    * path of every file, so brand + dropdown read as "tail -f /log/messages".
    *
    * The dropdown is always shown, even for a single file; the merged
    * "All logs" entry is only offered when there is more than one source.
-   * When the server provides a default source (explicit file argument,
-   * "messages", or the first file found) it is preselected; otherwise all
-   * logs are shown merged.
+   * Preselection order: the user's current choice (when the list is
+   * re-sent), then the `source` URL parameter (survives page reloads),
+   * then the server-provided default (explicit file argument, "messages",
+   * or the first file found); otherwise all logs are shown merged.
    *
    * @param {Array} files
    * @param {String} defaultFile source to preselect
@@ -437,6 +469,9 @@ window.App = (function app(window, document) {
   var _buildFileDropdown = function(files, defaultFile) {
     var allOption;
     var previous;
+    var isSelectable = function(source) {
+      return source === 'all' ? files.length > 1 : files.indexOf(source) !== -1;
+    };
 
     if (!_logSelect || !files || files.length === 0) {
       return;
@@ -445,6 +480,9 @@ window.App = (function app(window, document) {
     // the list is also re-sent when a new file appears in --log-dir; in that
     // case keep the user's current choice instead of re-applying the default
     previous = _logSelect.style.display !== 'none' ? _logSelect.value : '';
+    if (!previous) {
+      previous = _getSourceFromURL(window.location.toString());
+    }
 
     _logSelect.innerHTML = '';
 
@@ -462,8 +500,12 @@ window.App = (function app(window, document) {
       _logSelect.appendChild(option);
     });
 
-    if (previous && (previous === 'all' || files.indexOf(previous) !== -1)) {
+    if (previous && isSelectable(previous)) {
       _logSelect.value = previous;
+      if (_sourceFilter !== previous) {
+        _sourceFilter = previous;
+        _filterLogs();
+      }
     } else if (defaultFile && files.indexOf(defaultFile) !== -1) {
       _logSelect.value = defaultFile;
       _sourceFilter = defaultFile;
@@ -615,6 +657,7 @@ window.App = (function app(window, document) {
       if (_logSelect) {
         _logSelect.addEventListener('change', function() {
           _sourceFilter = this.value;
+          _setSourceParam(_sourceFilter, window.location.toString());
           _filterLogs();
         });
       }

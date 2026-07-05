@@ -272,6 +272,50 @@ describe('browser application', () => {
     logSelect.value.should.be.equal('b.log');
   });
 
+  it('should store the selected source in the URL', () => {
+    const logSelect = window.document.querySelector('#logSelect');
+    const event = window.document.createEvent('Event');
+
+    io.emit('options:files', ['a.log', 'b.log'], 'a.log');
+    logSelect.value = 'b.log';
+    event.initEvent('change', true, true);
+    logSelect.dispatchEvent(event);
+
+    window.location.href.should.containEql('source=b.log');
+  });
+
+  it('should restore the source from the URL over the default', (done) => {
+    const html =
+      '<title></title><body><div class="topbar"></div>' +
+      '<div class="log"></div><button type="button" id="pauseBtn"></button>' +
+      '<select id="logSelect" style="display: none;"></select>' +
+      '<input type="test" id="filter"/></body>';
+    const ansiup = fs.readFileSync('./web/assets/ansi_up.js', 'utf-8');
+    const src = fs.readFileSync('./web/assets/app.js', 'utf-8');
+
+    jsdom.env({
+      html,
+      url: 'http://localhost?source=b.log',
+      src: [ansiup, src],
+      onload: (domWindow) => {
+        window = domWindow;
+        initApp();
+
+        io.emit('options:files', ['a.log', 'b.log'], 'a.log');
+        io.emit('line', { line: 'line-a', source: 'a.log' });
+        io.emit('line', { line: 'line-b', source: 'b.log' });
+
+        const logSelect = window.document.querySelector('#logSelect');
+        logSelect.value.should.be.equal('b.log');
+
+        const log = window.document.querySelector('.log');
+        log.childNodes[0].style.display.should.be.equal('none');
+        log.childNodes[1].style.display.should.be.equal('');
+        done();
+      },
+    });
+  });
+
   it('should preselect the default source in the dropdown', () => {
     io.emit('options:files', ['a.log', 'b.log'], 'b.log');
     io.emit('line', { line: 'line-a', source: 'a.log' });
